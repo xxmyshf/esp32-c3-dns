@@ -1,0 +1,97 @@
+# 国内娱乐/广告/追踪域名示例
+# 格式：每行一个域名（#开头为注释）
+# 可直接用 build_blocklist.py 合并到 blocklist.bin
+
+# --- 头条/字节跳动 ---
+ad.toutiao.com
+track.toutiao.com
+ad.oceanengine.com
+track.snssdk.com
+ad.toutiao.com.cn
+is.snssdk.com
+log.snssdk.com
+
+# --- 微博 ---
+ads.weibo.com
+ad.sina.com.cn
+pop.sina.com.cn
+ad.thepaper.cn
+sax.sina.com.cn
+aliyun.sina.com.cn
+
+# --- 搜狐 ---
+ad.sohu.com
+track.sohu.com
+ads.sohu.com
+goto.sohu.com
+imp.goto.sohu.com
+
+# --- 网易 ---
+ads.163.com
+ad.163.com
+track.163.com
+g.163.com
+adsame.cn
+n.163.com
+
+# --- 百度广告 ---
+ad.baidu.com
+pos.baidu.com
+cpro.baidu.com
+mc.baidu.com
+hm.baidu.com
+ads.baidu.com
+
+# --- 360广告 ---
+ad.360.cn
+ad.u.360.cn
+ads.360.cn
+ad.union.360.cn
+click.360.cn
+
+# --- 腾讯广告 ---
+ad.qq.com
+ads.qq.com
+mi.gdt.qq.com
+ad.tqt.com
+pgdt.18cv.com
+
+# --- 其他国内广告联盟 ---
+admaster.com.cn
+adsame.cn
+domob.cn
+mediav.com
+youmi.net
+adview.cn
+adkk.com
+adsgg.com
+adtiger.com
+allyes.com
+bidcenter.com.cn
+clkservice.youdao.com
+ad.youdao.com
+imp.youdao.com
+tanx.com
+alimama.com
+ae.cn.yahoo.com
+
+# --- 短视频/直播平台广告 ---
+ad.douyin.com
+track.douyin.com
+ad.kuaishou.com
+track.kuaishou.com
+ad.huya.com
+ad.douyu.com
+ad.bilibili.com
+trace.bilibili.com
+
+# --- 音乐/音频广告 ---
+ad.music.163.com
+track.music.163.com
+ad.kugou.com
+ad.kuwo.cn
+
+# --- 阅读平台广告 ---
+ad.qidian.com
+ad.zhangyue.com
+ad.changdu.com

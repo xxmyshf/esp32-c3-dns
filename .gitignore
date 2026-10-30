@@ -1,0 +1,18 @@
+# ESP-IDF build output
+build/
+managed_components/
+sdkconfig.old
+sdkconfig.defaults.bak
+
+# macOS metadata
+.DS_Store
+._*
+
+# VS Code workspace file
+*.code-workspace
+
+# WiFi credentials (copy main/secrets.example.h -> main/secrets.h)
+main/secrets.h
+
+# Backups / scratch
+*.bak
