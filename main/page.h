@@ -41,7 +41,7 @@ h2{font-size:14px;color:#8b949e;margin:18px 0 8px}
 <div style=margin-bottom:6px><form id=impcf style=display:inline><input type=file id=impf accept=".txt" ><button id=btn_import></button></form> <button id=btn_clear onclick="if(confirm(L.clearConfirm[lang==='cn'?0:1]))clearCustom()"></button> <span id=impmsg style=color:#8b949e></span></div>
 <div style="max-height:200px;overflow-y:auto;border:1px solid #30363d;border-radius:6px"><table id=cl><tbody></tbody></table></div>
 <h2 id=h_dnslog>DNS 查询日志</h2>
-<div style="max-height:300px;overflow-y:auto;border:1px solid #30363d;border-radius:6px"><table id=dlg><thead><tr><th id=th_logdom>域名</th><th id=th_logip>来源IP</th><th id=th_logres>结果</th><th id=th_logtime>时间</th></tr></thead><tbody></tbody></table></div>
+<div style="max-height:300px;overflow-y:auto;border:1px solid #30363d;border-radius:6px"><table id=dlg><thead><tr><th id=th_logdom>域名</th><th id=th_logip>来源IP</th><th id=th_logres>结果</th><th id=th_logcnt>次数</th><th id=th_logtime>时间</th><th></th></tr></thead><tbody></tbody></table></div>
 <h2 id=h_upload>拦截列表上传</h2>
 <form id=upf style=margin-bottom:6px><input type=file id=blf accept=.bin><button id=btn_upload></button> <span id=upmsg2 style=color:#8b949e></span></form>
 <h2 id=h_fw>固件 OTA 更新</h2>
@@ -95,6 +95,8 @@ const L={
  logip:['来源IP','Client'],
  logres:['结果','Result'],
  logtime:['时间(s前)','Time(s ago)'],
+ logcnt:['次数','Count'],
+ blockBtn:['拦截','Block'],
  upload:['拦截列表上传','BLOCKLIST UPLOAD'],
  uploadBtn:['上传','Upload'],
  fw:['固件 OTA 更新','FIRMWARE OTA UPDATE'],
@@ -118,7 +120,7 @@ function applyLang(){
  langbtn.textContent=lang==='cn'?'EN':'中文';
  let ids={h_clients:'clients_h',h_updns:'updns',h_mdns:'mdns',h_cdns:'cdns',h_blockdom:'blockdom',h_dnslog:'dnslog',h_upload:'upload',h_fw:'fw'};
  for(let[id,k]of Object.entries(ids)){let el=document.getElementById(id);if(el)el.textContent=t(k)}
- let ths={th_ip:'ip',th_blk:'blk',th_alw:'alw',th_domain:'domain',th_logdom:'logdom',th_logip:'logip',th_logres:'logres',th_logtime:'logtime'};
+ let ths={th_ip:'ip',th_blk:'blk',th_alw:'alw',th_domain:'domain',th_logdom:'logdom',th_logip:'logip',th_logres:'logres',th_logtime:'logtime',th_logcnt:'logcnt'};
  for(let[id,k]of Object.entries(ths)){let el=document.getElementById(id);if(el)el.textContent=t(k)}
  btn_setupstream.textContent=t('setupstream');
  btn_setmdns.textContent=t('setmdns');
@@ -157,8 +159,15 @@ async function load(){
 async function loadLog(){
  let arr=await(await fetch('/log.json')).json();
  let now=Math.floor(Date.now()/1000);
- dlg.tBodies[0].innerHTML=arr.reverse().map(e=>
-`<tr><td>${esc(e.domain)}</td><td>${esc(e.client)}</td><td class=${e.result=='blocked'?'b':'a'}>${t(e.result)}</td><td style=color:#8b949e>${Math.max(0,now-e.ts)}${t('sec')}</td></tr>`).join('')||`<tr><td colspan=4 style=color:#8b949e>${t('none')}</td></tr>`;
+ // Merge by domain: count queries, keep latest client/result/time
+ let map={};
+ arr.forEach(e=>{
+  if(!map[e.domain]) map[e.domain]={domain:e.domain,client:e.client,result:e.result,ts:e.ts,count:1};
+  else{map[e.domain].count++;if(e.ts>map[e.domain].ts){map[e.domain].ts=e.ts;map[e.domain].client=e.client;map[e.domain].result=e.result;}}
+ });
+ let merged=Object.values(map).sort((a,b)=>b.ts-a.ts).slice(0,60);
+ dlg.tBodies[0].innerHTML=merged.map(e=>
+`<tr><td>${esc(e.domain)}</td><td>${esc(e.client)}</td><td class=${e.result=='blocked'?'b':'a'}>${t(e.result)}</td><td>${e.count}</td><td style=color:#8b949e>${Math.max(0,now-e.ts)}${t('sec')}</td><td><button class=blkbtn data-d="${esc(e.domain)}">${t('blockBtn')}</button></td></tr>`).join('')||`<tr><td colspan=6 style=color:#8b949e>${t('none')}</td></tr>`;
 }
 function saveMdns(){let n=mdnsinp.value.trim();if(!n)return;mdnsmsg.textContent='...';fetch('/setmdns?name='+encodeURIComponent(n),{headers:CSRF_HDRS}).then(r=>r.text()).then(s=>{mdnsmsg.textContent=s;setTimeout(load,2000)})}
 function saveUp(){let ip=upip.value.trim();if(!ip)return;fetch('/setupstream?ip='+ip,{headers:CSRF_HDRS}).then(r=>r.text()).then(s=>{upmsg.textContent=s;load()})}
@@ -172,6 +181,7 @@ catch(_){impmsg.textContent='error'}impf.value=''};
 function forgetWifi(){fetch('/forgetwifi',{headers:CSRF_HDRS}).then(r=>r.text()).then(s=>alert(s))}
 ct.addEventListener('click',e=>{if(e.target.classList.contains('ban'))fetch('/ban?ip='+e.target.dataset.ip,{headers:CSRF_HDRS}).then(load)});
 cl.addEventListener('click',e=>{if(e.target.classList.contains('rmbtn'))fetch('/unblock?d='+encodeURIComponent(e.target.dataset.d),{headers:CSRF_HDRS}).then(load)});
+dlg.addEventListener('click',e=>{if(e.target.classList.contains('blkbtn'))fetch('/addblock?d='+encodeURIComponent(e.target.dataset.d),{headers:CSRF_HDRS}).then(()=>{e.target.textContent='✓';setTimeout(load,500)})});
 fwf.onsubmit=async e=>{e.preventDefault();let f=fwb.files[0];if(!f)return;fwmsg.textContent='...';let fd=new FormData();fd.append('f',f);
 try{let r=await fetch('/update',{method:'POST',headers:CSRF_HDRS,body:fd});fwmsg.textContent=r.ok?'✓':'✗ '+await r.text();}catch(_){fwmsg.textContent='✓'}};
 upf.onsubmit=async e=>{e.preventDefault();let f=blf.files[0];if(!f)return;upmsg2.textContent='...';let fd=new FormData();fd.append('f',f);
